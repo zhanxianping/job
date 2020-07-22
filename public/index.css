@@ -20,3 +20,6 @@ body,html{
 #sideNav .el-submenu__title i,#sideNav .el-menu-item i{
     color: inherit !important;
 }
+#headerNav #nav-content .el-dropdown{
+    color: inherit !important;
+}
