@@ -23,3 +23,12 @@ body,html{
 #headerNav #nav-content .el-dropdown{
     color: inherit !important;
 }
+#headerNav .el-input-group__prepend{
+    padding: 0 5px;
+}
+#drawerThemeColor .v-modal{
+    opacity: .2;
+}
+#drawerThemeColor .el-color-picker__trigger{
+    width: 200px;
+}
