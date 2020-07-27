@@ -15,11 +15,14 @@ export default {
     post: function (url, params,type) {
         let dataVal = params;
         return new Promise((resolve, reject) => {
-            if (type !== undefined && type.dataType == "json"){
+            if (type && type.dataType == "json"){
                 axios.defaults.headers = {
                     'Content-Type':'application/json;charset=UTF-8'
                 };
             }else {
+                axios.defaults.headers = {
+                    'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'
+                };
                 dataVal = qs.stringify(params);
             }
             axios.post(url, dataVal).then(res => {

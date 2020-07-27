@@ -6,20 +6,15 @@ Vue.use(Vuex);
 export default new Vuex.Store({
     state: {
         token: "aaaa",
-        navList: [],
-        style: "s",
+        url: "/api/",
+        style: "",
     },
     getters: {
-        getNavlist: state => state.token,
-        getNavlist: state => state.navList,
+        getToken: state => state.token,
+        getUrl: state => state.url,
         getStyle: state => state.style,
     },
     mutations: {
-        addNavlist(state, list) {
-            if (list.length) {
-                state.navList = list;
-            }
-        },
         addStyle(state, val){
             state.style = val;
         }

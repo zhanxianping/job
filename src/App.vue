@@ -47,7 +47,7 @@
                         <img class="imgTwo" src="../public/image/index/square.png" alt="">
                     </div>
                     <div id="nav-user">
-                        <img src="./assets/1.jpg" alt="">
+                        <img :src="this.$store.getters.getUrl+headerNav.userImg" alt="">
                         <el-dropdown trigger="click" @command="userDrop">
                             <span class="el-dropdown-link">
                             管理员<i class="el-icon-arrow-down el-icon--right"></i>
@@ -86,21 +86,28 @@
                         </el-dropdown>
                     </div>
                 </div>
-                <el-dialog title="个人设置" width="500px" :visible.sync="headerNav.dialogFormVisible">
+                <el-dialog title="个人设置" width="450px" :visible.sync="headerNav.dialogFormVisible">
                     <el-tabs type="border-card">
                         <el-tab-pane label="头像设置">
                             <div class="uploadHead">
-                                <img src="./assets/1.jpg" alt="">
-                                <p><el-button type="primary">上传头像</el-button></p>
+                                <el-image :src="this.$store.getters.getUrl + headerNav.headPortrait" style="width: 100px;height: 100px;">
+                                    <div slot="error" class="image-slot">
+                                        <i class="el-icon-picture-outline"></i>
+                                    </div>
+                                </el-image>
+                                <p><el-button @click="headerNav.imgDialogUpload = true" type="primary">上传头像</el-button></p>
                             </div>
-                            <el-row :gutter="20">
-                                <el-col :span="4"><img class="userImg" src="./assets/1.jpg" alt=""></el-col>
-                                <el-col :span="4"><img class="userImg" src="./assets/1.jpg" alt=""></el-col>
-                                <el-col :span="4"><img class="userImg" src="./assets/1.jpg" alt=""></el-col>
-                                <el-col :span="4"><img class="userImg" src="./assets/1.jpg" alt=""></el-col>
-                                <el-col :span="4"><img class="userImg" src="./assets/1.jpg" alt=""></el-col>
-                                <el-col :span="4"><img class="userImg" src="./assets/1.jpg" alt=""></el-col>
-                            </el-row>
+                            <ul @click="imgReplace">
+                                <li><img class="userImg" src="./assets/user/hpic0.jpg" alt=""></li>
+                                <li><img class="userImg" src="./assets/user/hpic1.jpg" alt=""></li>
+                                <li><img class="userImg" src="./assets/user/hpic2.jpg" alt=""></li>
+                                <li><img class="userImg" src="./assets/user/hpic3.jpg" alt=""></li>
+                                <li><img class="userImg" src="./assets/user/hpic4.jpg" alt=""></li>
+                            </ul>
+                            <div class="user-bottom">
+                                <el-button size="small" @click="headerNav.dialogFormVisible = false">取 消</el-button>
+                                <el-button size="small" type="primary" @click="clickImgOpen">确 定</el-button>
+                            </div>
                         </el-tab-pane>
                         <el-tab-pane label="个人资料">
                             <el-form label-width="80px" :model="headerNav.formUser">
@@ -111,7 +118,7 @@
                                     <el-input v-model="headerNav.formUser.name"></el-input>
                                 </el-form-item>
                                 <el-form-item label="用户状态">
-                                    <el-input v-model="headerNav.formUser.name"></el-input>
+                                    <div class="el-input__inner">asdasd</div>
                                 </el-form-item>
                                 <el-form-item label="邮箱">
                                     <el-input v-model="headerNav.formUser.email"></el-input>
@@ -120,13 +127,34 @@
                                     <el-input v-model="headerNav.formUser.tel"></el-input>
                                 </el-form-item>
                             </el-form>
+                            <div class="user-bottom">
+                                <el-button size="small" @click="headerNav.dialogFormVisible = false">取 消</el-button>
+                                <el-button size="small" type="primary" @click="headerNav.dialogFormVisible = false">确 定</el-button>
+                            </div>
                         </el-tab-pane>
-                        <el-tab-pane label="密码设置">角色管理</el-tab-pane>
+                        <el-tab-pane label="密码设置">
+                            <el-form label-width="100px" :model="headerNav.formPass" :ref="headerNav.formPass">
+                                <el-form-item prop="password" label="密码" :rules="[{ required: true, message: '密码不能为空！'}]">
+                                    <el-input type="password" autocomplete="off" v-model="headerNav.formPass.password"></el-input>
+                                </el-form-item>
+                                <el-form-item label="新密码" prop="newPassword" :rules="[{ required: true, message: '请输入新密码！'},
+                                {validator: headerNav.formPassRules.newPassRules,trigger: 'blur'}]">
+                                    <el-input type="password" v-model="headerNav.formPass.newPassword"></el-input>
+                                </el-form-item>
+                                <el-form-item label="确认新密码" prop="sureNewPassword" :rules="[{ required: true, message: '请确认新密码！'},
+                                {validator: headerNav.formPassRules.okNewPassRules,trigger: 'blur'}]">
+                                    <el-input type="password" v-model="headerNav.formPass.sureNewPassword"></el-input>
+                                </el-form-item>
+                                <el-form-item class="user-bottom">
+                                    <el-button size="small" @click="headerNav.dialogFormVisible = false">取 消</el-button>
+                                    <el-button size="small" type="primary" @click="submitFormPass(headerNav.formPass)">确 定</el-button>
+                                </el-form-item>
+                            </el-form>
+                        </el-tab-pane>
                     </el-tabs>
-                    <div slot="footer" class="dialog-footer">
-                        <el-button @click="headerNav.dialogFormVisible = false">取 消</el-button>
-                        <el-button type="primary" @click="headerNav.dialogFormVisible = false">确 定</el-button>
-                    </div>
+                </el-dialog>
+                <el-dialog title="上传图片" width="650px" :visible.sync="headerNav.imgDialogUpload">
+                    <ImgTailoring/>
                 </el-dialog>
             </div>
         </div>
@@ -136,8 +164,10 @@
 <script>
     import $ from "jquery";
     import SideNavList from "./components/index/sideNav-list";
-    import ChinaLogo from "../public/image/index/ChinaLogo.png"
-    import EnglishLogo from "../public/image/index/EnglishLogo.png"
+    import ChinaLogo from "../public/image/index/ChinaLogo.png";
+    import EnglishLogo from "../public/image/index/EnglishLogo.png";
+    import ImgTailoring from "./components/index/img-tailoring";
+    import $vm from "./utils/util";
 
     export default {
         name: "app",
@@ -159,24 +189,49 @@
                     icon: "el-icon-s-fold",
                     sideNavOn: false,
                     imgOne: false,
+                    headPortrait: "", //头像
+                    userImg: "",//用户头像
                     language: {
                         img: ChinaLogo,
                         text: "中文"
                     },
                     dialogFormVisible: false,
+                    imgDialogUpload: false,
                     formUser:{
                         loginName: "",
                         name:"",
                         state: "",
                         email: "",
                         tel: ""
+                    },
+                    formPass:{
+                        password: "",
+                        newPassword: '',
+                        sureNewPassword: "",
+                    },
+                    formPassRules:{
+                        newPassRules: (rule, value, callback) => {
+                            if (this.headerNav.formPass.password === value) {
+                                callback(new Error('新密码与旧密码不可一致！'))
+                            } else {
+                                callback()
+                            }
+                        },
+                        okNewPassRules: (rule, value, callback) => {
+                            if (this.headerNav.formPass.newPassword !== value) {
+                                callback(new Error('两次密码不一致！'))
+                            } else {
+                                callback()
+                            }
+                        },
                     }
                 }
 
             }
         },
         components: {
-            SideNavList
+            SideNavList,
+            ImgTailoring
         },
         methods: {
             //点击收起展开菜单栏
@@ -189,6 +244,7 @@
                 switch (Number(command)) {
                     case 1:
                         that.headerNav.dialogFormVisible = true;
+                        that.headerNav.headPortrait = that.headerNav.userImg;
                         break;
                     case 2:
                         break;
@@ -200,6 +256,46 @@
                         break;
                     default:
 
+                }
+            },
+            //更改密码
+            submitFormPass(formName){
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        console.log(formName);
+
+                        this.$post("/backstage/user/resetPwdSys",this.headerNav.formPass).then((data)=>{
+                            console.log(data);
+                            if(!data.res){
+                                this.$message({
+                                    showClose: true,
+                                    message: data.resMsg,
+                                    type: 'error'
+                                });
+                            }
+
+                        })
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+                //headerNav.dialogFormVisible = false
+            },
+            //上传头像
+            clickImgOpen(){
+                this.headerNav.dialogFormVisible = false;
+                this.headerNav.userImg = this.headerNav.headPortrait;
+                this.$post("/backstage/user/updateHeadImg",{headUrl: this.headerNav.userImg},{dataType: "json"}).then((data)=>{
+                    this.$message({
+                        message: data.resMsg,
+                        type: 'success'
+                    });
+                });
+            },
+            imgReplace(e){
+                if(e.target.tagName.toLowerCase() == "img"){
+                    this.headerNav.headPortrait = e.target.src;
                 }
             },
             //语言选择
@@ -247,9 +343,9 @@
         },
         mounted() {
             //侧边导航数据
-            /*this.$post("/backstage/menu/getMenuJson3", {ref: "n"}, {dataType: "json"}).then((data) => {
+            this.$post("/backstage/menu/getMenuJson3", {ref: "n"}, {dataType: "json"}).then((data) => {
                 this.sideNav.data = data.obj.menuList;
-            });*/
+            });
             //侧边导航颜色 /backstage/account/getTheme
             this.$post("/backstage/account/getTheme").then((data) => {
                 let val = JSON.parse(data.obj);
@@ -278,6 +374,13 @@
                 }`;
                 document.head.appendChild(style);
             });
+
+            //接收图片裁剪好的数据
+            $vm.$on("imgTailOk",(val)=>{
+                console.log(val);
+                this.headerNav.headPortrait = val;
+                this.headerNav.imgDialogUpload = false;
+            })
         },
         beforeDestroy() {
             if (this.$store.getters.getStyle) {
@@ -360,7 +463,9 @@
         height: 100%;
         background-color: green;
     }
-
+    .el-message-box{
+        width: auto !important;
+    }
     #headerNav {
         width: 100%;
         height: 50px;
@@ -459,10 +564,23 @@
                 }
             }
         }
+        .el-tabs{
+            border: none;
+            box-shadow: none;
 
+            .user-bottom{
+                text-align: right;
+                margin-top: 30px;
+            }
+        }
+        .el-tabs--border-card>.el-tabs__header{
+            border: 1px solid #E4E7ED;
+        }
         .el-dialog__body{
-            height: 300px;
+            height: 400px;
             padding-top: 12px;
+            padding-bottom: 10px;
+            overflow-y: auto;
 
             .uploadHead{
                 text-align: center;
@@ -475,8 +593,16 @@
                     margin-top: 10px;
                 }
             }
-            .el-row{
-                margin-top: 40px;
+            ul{
+                width: 100%;
+                height: 50px;
+                margin-top: 30px;
+
+                li{
+                    list-style: none;
+                    float: left;
+                    margin-left: 21px;
+                }
             }
             .userImg{
                 width: 50px;
