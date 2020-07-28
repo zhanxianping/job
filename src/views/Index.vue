@@ -1,14 +1,14 @@
 <template>
     <div id="app">
-        <div id="sideNav" :style="headerNav.sideNavOn ? 'width: 70px;':'width:220px;'">
+        <div id="sideNav" :style="headerNav.sideNavOn ? 'width: 70px;':'width:220px;' + 'background:'+sideNav.color.navSideColor">
             <el-menu
                     :collapse="headerNav.sideNavOn"
                     class="el-menu-vertical-demo"
                     :collapse-transition="false"
                     unique-opened
-                    :background-color="sideNav.color.backgroundColor"
-                    :text-color="sideNav.color.textColor"
-                    :active-text-color="sideNav.color.activeColor">
+                    background-color="transparent"
+                    :text-color="sideNav.color.fontColor"
+                    :active-text-color="sideNav.color.allLiColor">
                 <li id="logo">
                     <img src="../../public/image/index/logo.png" alt="">
                 </li>
@@ -30,7 +30,7 @@
             </el-menu>
         </div>
         <div id="rightBox" :style="headerNav.sideNavOn ? 'margin-left: 70px;':'margin-left: 220px;'">
-            <div id="headerNav" :style="'background-color:'+sideNav.color.headerNav">
+            <div id="headerNav" :style="'background:'+sideNav.color.navHeaderColor">
                 <div id="nav-title">
                     <i @click="navIconOn" style="cursor: pointer" :class="headerNav.sideNavOn ? 'el-icon-s-unfold':'el-icon-s-fold'"></i>
                     <span>IT服务管理系统</span>
@@ -66,8 +66,8 @@
                             </el-dropdown-menu>
                         </el-dropdown>
                     </div>
-                    <el-badge :value="134" class="item">
-                        <i size="small" class="el-icon-bell nav-news"></i>
+                    <el-badge :value="headerNav.wsData.length" class="item">
+                        <i @click="WSMsgLook" size="small" class="el-icon-bell nav-news"></i>
                     </el-badge>
 
                     <div class="nav-language">
@@ -188,7 +188,43 @@
                 <el-dialog title="应用设置" width="85%" :visible.sync="headerNav.dialogApplySetting">
                     <iframe src="http://localhost:8080/backstage/portal/editLayout" style="width: 100%;height: 98%" frameborder="0"></iframe>
                 </el-dialog>
-                <ApplySetting @drawerColorItem="drawerColorItem" :dataRes="headerNav.drawerThemeColor" @drawerColorMsg="headerNav.drawerThemeColor = false" />
+                <ApplySetting @drawerColorItem="drawerColorItem" :dataColor="sideNav.color" :dataRes="headerNav.drawerThemeColor" @drawerColorMsg="headerNav.drawerThemeColor = false" />
+                <el-dialog id="dialogSystemInfo" title="系统信息" width="500px" :visible.sync="headerNav.dialogSystemInfo">
+                    <el-form label-width="180px" >
+                        <el-form-item label="软件名：">
+                            <strong>IT服务管理系统</strong>
+                        </el-form-item>
+                        <el-form-item label="版本号：">
+                            <strong>V 3.8.2</strong>
+                        </el-form-item>
+                        <el-form-item label="授权到期：">
+                            <strong>2020-08-31 00:00:00</strong>
+                        </el-form-item>
+                    </el-form>
+                    <p>保留所有权</p>
+                </el-dialog>
+                <el-drawer id="dialogWSInfo" title="消息实时提醒"
+                        :visible.sync="headerNav.drawerWS"
+                        :with-header="false">
+                    <div id="WSContent">
+                        <el-tag class="WSContent-title">
+                            <strong>你有{{headerNav.wsData.length}}条新通知消息待阅读</strong>
+                            <el-button @click="WSClearAll" type="primary" size="mini" round>全部已读</el-button>
+                        </el-tag>
+                        <div class="block WSContent-box">
+                            <el-timeline>
+                                <el-timeline-item :timestamp="timeString(Number(item.createTime))" placement="top"
+                                                  v-for="(item, index) in headerNav.wsData"
+                                                  :key="index">
+                                    <el-card>
+                                        <h4>{{WSContentBrack(item.content,item.title)}}</h4>
+                                        <p>{{WSContentBrack(item.content)}}</p>
+                                    </el-card>
+                                </el-timeline-item>
+                            </el-timeline>
+                        </div>
+                    </div>
+                </el-drawer>
             </div>
         </div>
     </div>
@@ -209,12 +245,12 @@
             return {
                 sideNav: {
                     color: {
-                        backgroundColor: "#545c64",
-                        textColor: "#fff",
-                        activeColor: "#ff7b62",
-                        headerNav: "#11a0f8",
-                        hoverColor: "",
-                        hoverBackgroundColor: ""
+                        navHeaderColor: "#11a0f8",
+                        navSideColor: "#fff",
+                        fontColor: "#5e5f61",
+                        firstLiColor: "#fff",
+                        firstLiBack: "#11a0f8",
+                        allLiColor: "#11a0f8"
                     },
                     data: []
                 },
@@ -233,6 +269,9 @@
                     imgDialogUpload: false,
                     dialogApplySetting: false,
                     drawerThemeColor: false,
+                    dialogSystemInfo: false,
+                    drawerWS: false,
+                    wsData: [],
                     formUser: {
                         loginName: "",
                         name: "",
@@ -301,21 +340,34 @@
                         that.headerNav.drawerThemeColor = true;
                         break;
                     case 4:
+                        that.headerNav.dialogSystemInfo = true;
                         break;
                     case 5:
+                        this.$confirm('<div style="width: 150px;height: 30px;line-height: 30px;">确认退出登录吗?</div>', '提示', {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            dangerouslyUseHTMLString: true,
+                            type: 'warning'
+                        }).then(() => {
+                            this.$post("/system_logout").then((data) => {
+                                if (data.res) {
+                                    this.$message({
+                                        showClose: true,
+                                        message: data.resMsg,
+                                        type: 'success'
+                                    });
+                                }
+                            });
+                        });
                         break;
                     default:
-
                 }
             },
             //更改密码
             submitFormPass(formName) {
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
-                        console.log(formName);
-
                         this.$post("/backstage/user/resetPwdSys", this.headerNav.formPass).then((data) => {
-                            console.log(data);
                             if (!data.res) {
                                 this.$message({
                                     showClose: true,
@@ -330,7 +382,6 @@
                         return false;
                     }
                 });
-                //headerNav.dialogFormVisible = false
             },
             //上传头像
             clickImgOpen() {
@@ -360,16 +411,82 @@
                 this.headerNav.user_visible = false;
                 this.headerNav.headerNavUser_state_val = this.headerNav.user_state_input;
             },
-            drawerColorItem(color){
-                console.log(color);
+            drawerColorItem(color,set){
+                if (typeof color == "string") {
+                    this.$set(this.sideNav.color, set, color);
+                }else if (typeof color == "boolean"){
+                    this.ajaxBackgroundColor();
+                } else {
+                    this.$set(this.sideNav, "color", color);
+                    this.mnualmHoverColor(color.firstLiColor,color.firstLiBack,true);
+                }
+            },
+            //查看消息
+            WSMsgLook(){
+                this.headerNav.drawerWS = true;
+            },
+            WSClearAll(){
+                this.$post("/backstage/notices/submitAllReadMark").then((data) => {
+                   if (data.res){
+                       this.headerNav.wsData = [];
+                       this.$message({
+                           showClose: true,
+                           message: "全部已读完成",
+                           type: 'success'
+                       });
+                   }
+                });
+            },
+            timeString(timestamp){
+                if (!timestamp) return "";
+                let date = new Date(timestamp);
+                let y = date.getFullYear();
+                let m = date.getMonth() + 1;
+                m = m < 10 ? ('0' + m) : m;
+                let d = date.getDate();
+                d = d < 10 ? ('0' + d) : d;
+                let h = date.getHours();
+                h = h < 10 ? ('0' + h) : h;
+                let minute = date.getMinutes();
+                let second = date.getSeconds();
+                minute = minute < 10 ? ('0' + minute) : minute;
+                second = second < 10 ? ('0' + second) : second;
+                return y + '/' + m + '/' + d +' '+ h +':'+ minute +':' + second;
+            },
+            WSContentBrack(text,val2){
+                if(val2){
+                    let regex = /\[(.+?)\]/g;
+                    let options = text.match(regex);
+                    if (options && options.length) {
+                        return "您的工单"+options.join("")+"提醒";
+                    }
+                    return val2;
+                }else {
+                    if(text.indexOf("工单主题") != -1){
+                        return text.split("工单主题：")[1];
+                    }
+                }
             },
             //语言选择
             languageDrop(command) {
+                let language = "";
                 if (command == "china") {
-                    this.headerNav.language = {img: ChinaLogo, text: "中文"}
+                    language = "zh_CN";
+                    this.headerNav.language = {img: ChinaLogo, text: "中文"};
                 } else {
-                    this.headerNav.language = {img: EnglishLogo, text: "英文"}
+                    language = "en_US";
+                    this.headerNav.language = {img: EnglishLogo, text: "英文"};
                 }
+                this.$post('/backstage/account/setLanguage',{language: language}).then((data) => {
+                    if (data.res) {
+                        this.$message({
+                            showClose: true,
+                            message: data.resMsg,
+                            type: 'success'
+                        });
+                        window.location.reload();
+                    }
+                })
             },
             //头部展开动画
             navImgone(e) {
@@ -405,6 +522,43 @@
                     });
                 }
             },
+            //手动设置背景色hover
+            mnualmHoverColor(firstLiColor,firstLiBack,msg){
+                if (msg){
+                    document.head.removeChild(this.$store.getters.getStyle);
+                }
+                let style = document.createElement("style");
+                style.type = "text/css";
+                this.$store.commit("addStyle", style);
+                style.innerHTML = `
+                #sideNav .el-submenu__title:hover{
+                    background-color: ${firstLiBack} !important;
+                    color: ${firstLiColor} !important;
+                }
+                #sideNav .el-menu-item:hover{
+                    background-color: ${firstLiBack} !important;
+                    color: ${firstLiColor} !important;
+                }
+                #sideNav .is-opened>div{
+                    background-color: ${firstLiBack} !important;
+                    color: ${firstLiColor} !important;
+                }`;
+                document.head.appendChild(style);
+            },
+            //获取设置好的背景色
+            ajaxBackgroundColor(){
+                this.$post("/backstage/account/getTheme").then((data) => {
+                    let val = JSON.parse(data.obj);
+                    this.$set(this.sideNav.color, "navHeaderColor", val[0]);
+                    this.$set(this.sideNav.color, "navSideColor", val[1]);
+                    this.$set(this.sideNav.color, "fontColor", val[2]);
+                    this.$set(this.sideNav.color, "firstLiColor", val[3]);
+                    this.$set(this.sideNav.color, "firstLiBack", val[4]);
+                    this.$set(this.sideNav.color, "allLiColor", val[5]);
+
+                    this.mnualmHoverColor(val[3],val[4]);
+                });
+            }
         },
         mounted() {
             //侧边导航数据
@@ -412,39 +566,27 @@
                 this.sideNav.data = data.obj.menuList;
             });
             //侧边导航颜色 /backstage/account/getTheme
-            this.$post("/backstage/account/getTheme").then((data) => {
-                let val = JSON.parse(data.obj);
-                this.$set(this.sideNav.color, "headerNav", val[0]);
-                this.$set(this.sideNav.color, "backgroundColor", val[1]);
-                this.$set(this.sideNav.color, "textColor", val[2]);
-                this.$set(this.sideNav.color, "hoverColor", val[3]);
-                this.$set(this.sideNav.color, "hoverBackgroundColor", val[4]);
-                this.$set(this.sideNav.color, "activeColor", val[5]);
-
-                let style = document.createElement("style");
-                style.type = "text/css";
-                this.$store.commit("addStyle", style);
-                style.innerHTML = `
-                #sideNav .el-submenu__title:hover{
-                    background-color: ${val[4]} !important;
-                    color: ${val[3]} !important;
-                }
-                #sideNav .el-menu-item:hover{
-                    background-color: ${val[4]} !important;
-                    color: ${val[3]} !important;
-                }
-                #sideNav .is-opened>div{
-                    background-color: ${val[4]} !important;
-                    color: ${val[3]} !important;
-                }`;
-                document.head.appendChild(style);
-            });
+            this.ajaxBackgroundColor();
 
             //接收图片裁剪好的数据
             $vm.$on("imgTailOk", (val) => {
                 console.log(val);
                 this.headerNav.headPortrait = this.$store.getters.getUrl + val;
                 this.headerNav.imgDialogUpload = false;
+            });
+
+            //接收我的消息
+            this.$post("/backstage/notices/listUnread").then((data) => {
+                this.headerNav.wsData = data.obj;
+            });
+
+            //接收webSocket
+            this.$ws.message().then((data)=>{
+                this.$notify({
+                    title: this.WSContentBrack(data.content,data.title),
+                    message: this.WSContentBrack(data.content),
+                    position: 'bottom-right'
+                });
             })
         },
         beforeDestroy() {
@@ -643,6 +785,16 @@
         .el-tabs--border-card > .el-tabs__header {
             border: 1px solid #E4E7ED;
         }
+        #dialogSystemInfo .el-dialog__body{
+            height: auto;
+
+            p{
+                text-align: center;
+                margin-top: 30px;
+                margin-bottom: 50px;
+                color: #e6a23c;
+            }
+        }
         .el-dialog__body {
             height: 400px;
             padding-top: 12px;
@@ -728,5 +880,40 @@
     .head-drawerThemeColor .el-drawer.rtl{
         height: calc(100% - 50px);
         top: 50px;
+    }
+
+    #dialogWSInfo{
+        .el-drawer{
+            top: 50px;
+            height: calc(100% - 50px);
+
+            .el-drawer__body{
+                overflow-y: auto;
+
+                #WSContent{
+                    padding: 10px;
+
+                    .WSContent-title{
+                        padding: 0 20px;
+                        width: 100%;
+
+                        strong{
+                            margin-right: 20px;
+                        }
+                    }
+
+                    .WSContent-box{
+                        margin-top: 20px;
+
+                        .el-card{
+                            p{
+                                margin-top: 5px;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     }
 </style>

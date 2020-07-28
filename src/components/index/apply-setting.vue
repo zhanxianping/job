@@ -19,15 +19,15 @@
                 <h4 style="margin-top: 15px">自定义配色</h4>
                 <div>
                     <div class="el-form-item">
-                        <el-color-picker v-model="colorBox.navHeaderColor"></el-color-picker>
+                        <el-color-picker @active-change="changeHeaderColor" v-model="colorBox.navHeaderColor"></el-color-picker>
                         <div class="colorTie">头部颜色选取</div>
                     </div>
                     <div class="el-form-item">
-                        <el-color-picker v-model="colorBox.navSideColor"></el-color-picker>
+                        <el-color-picker @active-change="changeSideColor" v-model="colorBox.navSideColor"></el-color-picker>
                         <div class="colorTie">侧边导航背景</div>
                     </div>
                     <div class="el-form-item">
-                        <el-color-picker v-model="colorBox.fontColor"></el-color-picker>
+                        <el-color-picker @active-change="changeFontColor" v-model="colorBox.fontColor"></el-color-picker>
                         <div class="colorTie">侧边导航字体</div>
                     </div>
                     <div class="el-form-item">
@@ -44,8 +44,8 @@
                     </div>
                     <div class="el-form-item">
                         <div class="el-dialog__footer">
-                            <el-button size="small" type="warning">重置</el-button>
-                            <el-button size="small" type="primary">更新</el-button>
+                            <el-button @click="reset" size="small" type="warning">默认</el-button>
+                            <el-button @click="update" size="small" type="primary">更新</el-button>
                         </div>
                     </div>
                 </div>
@@ -119,21 +119,66 @@
                 }
             }
         },
-        props: ["dataRes"],
+        props: ["dataRes","dataColor"],
         watch: {
             dataRes: function (newValue, oldValue) {
                 this.drawerThemeColor = newValue;
+            },
+            dataColor: function (newValue, oldValue) {
+                this.colorBox = newValue;
             }
         },
         methods: {
+            reset(){
+                let data = JSON.stringify(["#11a0f8","#fff","#5e5f61","#fff","#11a0f8","#11a0f8"]);
+                this.colorBox = {
+                    navHeaderColor: "#11a0f8",
+                    navSideColor: "#fff",
+                    fontColor: "#5e5f61",
+                    firstLiColor: "#fff",
+                    firstLiBack: "#11a0f8",
+                    allLiColor: "#11a0f8"
+                };
+                this.$post("/backstage/account/setTheme", {theme: data}).then((data) => {
+                    this.$message({
+                        message: data.resMsg,
+                        type: 'success'
+                    });
+                });
+                this.$emit("drawerColorMsg", false);
+                this.$emit("drawerColorItem", this.colorBox);
+                this.drawerThemeColor = false;
+            },
+            update(){
+                let color =  this.$parent.sideNav.color;
+                let data = JSON.stringify([color.navHeaderColor,color.navSideColor,color.fontColor,color.firstLiColor,color.firstLiBack,color.allLiColor]);
+                this.$post("/backstage/account/setTheme", {theme: data}).then((data) => {
+                    this.$message({
+                        message: data.resMsg,
+                        type: 'success'
+                    });
+                });
+                this.$emit("drawerColorMsg", false);
+                this.drawerThemeColor = false;
+            },
             colorClose(done) {
                 done();
                 this.$emit("drawerColorMsg", false);
+                this.$emit("drawerColorItem", false);
             },
             colorIndexItem(e){
                 if (e.target.tagName.toLowerCase() == "li"){
                     this.$emit("drawerColorItem", this.indexItem[Number(e.target.dataset.index)]);
                 }
+            },
+            changeHeaderColor(color){
+                this.$emit("drawerColorItem", color, "navHeaderColor");
+            },
+            changeSideColor(color){
+                this.$emit("drawerColorItem", color, "navSideColor");
+            },
+            changeFontColor(color){
+                this.$emit("drawerColorItem", color, "fontColor");
             }
         }
     }

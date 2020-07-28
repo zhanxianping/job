@@ -5,11 +5,13 @@ import store from './store';
 import api from "./utils/api";
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
+import ws from "./utils/webSocket";
 
 Vue.use(ElementUI);
 Vue.config.productionTip = false;
 Vue.prototype.$get = api.get;
 Vue.prototype.$post = api.post;
+Vue.prototype.$ws = ws;
 
 new Vue({
   router,
