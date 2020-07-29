@@ -6,7 +6,10 @@
                 <sideNavList :dataList="item.nodes" :listIndex="index" />
             </el-submenu>
 
-            <el-menu-item v-else :index="listIndex+'-'+String(index)">{{item.name}}</el-menu-item>
+            <el-menu-item v-else
+                          :data-name="item.name"
+                          :data-url="item.resUrl + '?menu=' + item.id"
+                          :index="listIndex+'-'+String(index)">{{item.name}}</el-menu-item>
         </div>
     </div>
 </template>

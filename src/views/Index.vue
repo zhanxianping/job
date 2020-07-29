@@ -1,6 +1,6 @@
 <template>
     <div id="app">
-        <div id="sideNav" :style="headerNav.sideNavOn ? 'width: 70px;':'width:220px;' + 'background:'+sideNav.color.navSideColor">
+        <div id="sideNav" @click.capture="sideNavClick" :style="headerNav.sideNavOn ? 'width: 70px;':'width:220px;' + 'background:'+sideNav.color.navSideColor">
             <el-menu
                     :collapse="headerNav.sideNavOn"
                     class="el-menu-vertical-demo"
@@ -21,7 +21,10 @@
                         <SideNavList v-if="item.nodes !== undefined && item.nodes.length >= 1" :dataList="item.nodes"
                                      :listIndex="index"/>
                     </el-submenu>
-                    <el-menu-item v-else :index="String(index)">
+                    <el-menu-item  v-else
+                                   :data-name="item.name"
+                                   :data-url="item.resUrl + '?menu=' + item.id"
+                                   :index="String(index)">
                         <i :class="'icon iconfont '+item.icon"></i>
                         <span slot="title">{{item.name}}</span>
                     </el-menu-item>
@@ -211,12 +214,12 @@
                             <strong>你有{{headerNav.wsData.length}}条新通知消息待阅读</strong>
                             <el-button @click="WSClearAll" type="primary" size="mini" round>全部已读</el-button>
                         </el-tag>
-                        <div class="block WSContent-box">
+                        <div @click="WSOpenOrder" class="block WSContent-box">
                             <el-timeline>
                                 <el-timeline-item :timestamp="timeString(Number(item.createTime))" placement="top"
                                                   v-for="(item, index) in headerNav.wsData"
                                                   :key="index">
-                                    <el-card>
+                                    <el-card :data-index="index">
                                         <h4>{{WSContentBrack(item.content,item.title)}}</h4>
                                         <p>{{WSContentBrack(item.content)}}</p>
                                     </el-card>
@@ -225,6 +228,37 @@
                         </div>
                     </div>
                 </el-drawer>
+            </div>
+            <div id="navIndexItem">
+                <el-button @click="headerNavBtnLeft" class="positionBtn" type="primary" plain>
+                    <svg t="1595991300769" class="btnIcon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1292"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <path d="M198.4 473.6l332.8-332.8c6.4-6.4 25.6 0 25.6 12.8l0 256 262.4-262.4c6.4-6.4 25.6 0 25.6 12.8l0 729.6c0 12.8-12.8 19.2-25.6 12.8L556.8 627.2l0 256c0 12.8-12.8 19.2-25.6 12.8L198.4 550.4C172.8 531.2 172.8 492.8 198.4 473.6z"
+                              p-id="1532"></path>
+                    </svg>
+                </el-button>
+                <div @click="navIndexBtnBox($event)" id="navIndexBtnBox">
+                    <el-button-group>
+                        <el-button type="primary" :plain="navIndexItem.jobIframe != index"
+                                   v-for="(item, index) in navIndexItem.btnData"
+                                   :data-index="index"
+                                   :key="index">{{item.name}}<i class="el-icon-error"></i></el-button>
+                    </el-button-group>
+                </div>
+                <el-button @click="headerNavBtnRight" class="positionBtn" type="primary" plain>
+                    <svg t="1595991300769" class="btnIcon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1292"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <path d="M838.4 473.6 505.6 134.4C499.2 128 480 134.4 480 147.2l0 256L217.6 134.4C211.2 128 192 134.4 192 147.2l0 729.6c0 12.8 12.8 19.2 25.6 12.8l262.4-262.4 0 256c0 12.8 12.8 19.2 25.6 12.8l339.2-339.2C864 531.2 864 492.8 838.4 473.6z"
+                              p-id="1293"></path>
+                    </svg>
+                </el-button>
+            </div>
+            <div id="rightBox-content">
+                <iframe class="jobIframe" :src="'http://localhost:8080'+item.url"
+                        v-for="(item, index) in navIndexItem.btnData"
+                        v-show="navIndexItem.jobIframe == index"
+                        :key="index"
+                        frameborder="0"></iframe>
             </div>
         </div>
     </div>
@@ -311,6 +345,12 @@
                             }
                         }
                     }
+                },
+
+                navIndexItem:{
+                    btnClickIndex: 0,//第二导航左右按钮初始状态
+                    jobIframe: 0, //主页iframe初始显示
+                    btnData: []
                 }
 
             }
@@ -320,7 +360,51 @@
             ImgTailoring,
             ApplySetting
         },
+        watch:{
+            btnClickIndex(newName, oldName) {
+                if (newName > 4){
+                    this.headerNavBtnLeftWidth(Number(newName));
+                }
+            }
+        },
+        computed: {
+            btnClickIndex(){
+                return this.navIndexItem.jobIframe
+            }
+        },
         methods: {
+            //侧边菜单点击
+            sideNavClick(e){
+                if (e.target.classList.contains("el-menu-item") || e.target.parentNode.classList.contains("el-menu-item")){
+                    let data = this.navIndexItem.btnData,
+                        dataset = e.target.dataset.name ? e.target.dataset : e.target.parentNode.dataset;
+                    for (let i=0;i<data.length;i++){
+                        if (data[i].name == dataset.name) {
+                            this.$set(this.navIndexItem,"jobIframe",i);
+                            this.headerNavBtnLeftWidth(i);
+                            return;
+                        }
+                    }
+                    data.push({name: dataset.name, url: dataset.url});
+                    this.$set(this.navIndexItem,"btnData",data);
+                    this.$set(this.navIndexItem,"jobIframe",data.length - 1);
+                }
+            },
+            //头部菜单点击
+            navIndexBtnBox(e){
+                if (e.target.classList.contains("el-button")){
+                    this.$set(this.navIndexItem,"jobIframe",e.target.dataset.index);
+                } else if (e.target.parentNode.classList.contains("el-button")){
+                    this.$set(this.navIndexItem,"jobIframe",e.target.parentNode.dataset.index);
+                } else if (e.target.tagName.toLowerCase() == "i"){
+                    let data = this.navIndexItem.btnData,index = e.target.parentNode.parentNode.dataset.index;
+                    if(index != 0){
+                        data.splice(index,1);
+                        this.$set(this.navIndexItem,"btnData",data);
+                        this.$set(this.navIndexItem,"jobIframe",index -1);
+                    }
+                }
+            },
             //点击收起展开菜单栏
             navIconOn() {
                 this.headerNav.sideNavOn = !this.headerNav.sideNavOn;
@@ -467,6 +551,20 @@
                     }
                 }
             },
+            WSOpenOrder(e){
+                if (e.target.classList.contains("el-card")){
+                    let data = this.headerNav.wsData;
+                    let dataHead = this.navIndexItem.btnData;
+                    data.splice(Number(e.target.dataset.index),1);
+                    this.$set(this.headerNav,"wsData",data);
+                    this.$post("/backstage/notices/submitReadMark",{id: data[[Number(e.target.dataset.index)]].id});
+                    this.$set(this.headerNav,"wsData",data);
+                    dataHead.push({name: data[Number(e.target.dataset.index)].title, url: data[Number(e.target.dataset.index)].url});
+                    this.$set(this.navIndexItem,"btnData",dataHead);
+                    this.$set(this.navIndexItem,"jobIframe",dataHead.length - 1);
+                    this.headerNav.drawerWS = false;
+                }
+            },
             //语言选择
             languageDrop(command) {
                 let language = "";
@@ -558,12 +656,80 @@
 
                     this.mnualmHoverColor(val[3],val[4]);
                 });
+            },
+
+            //头部第二导航按钮点击事件
+            headerNavBtnLeft(e){
+                this.headerNavBtnFunction(0);
+            },
+            headerNavBtnRight(){
+                this.headerNavBtnFunction(1);
+            },
+            headerNavBtnFunction(msg){
+                let btn = Array.from(document.querySelectorAll("#navIndexBtnBox .el-button")) ;
+                let btnBox = document.querySelector("#navIndexBtnBox>.el-button-group"),btnBoxWidth = document.querySelector("#navIndexBtnBox").offsetWidth;
+                let btnWidth = btn.reduce((pre,next,index) =>{
+                    return pre + next.offsetWidth;
+                },0);
+                if(btnWidth > btnBoxWidth){
+                    if (!msg){
+                        if(!this.navIndexItem.btnClickIndex){
+                            btn.reduce((pre,next,index) =>{
+                                if(pre != null && btnBoxWidth < (pre + next.offsetWidth)){
+                                    btnBox.style.left = btnBoxWidth + index + 1 - (pre + next.offsetWidth) + "px";
+                                    this.navIndexItem.btnClickIndex = index;
+                                    return null;
+                                }
+                                return pre + next.offsetWidth;
+                            },0);
+                        }else {
+                            btn.reduce((pre,next,index) =>{
+                                if(pre != null && this.navIndexItem.btnClickIndex+1 == index){
+                                    btnBox.style.left = btnBoxWidth + index + 1 - (pre + next.offsetWidth) + "px";
+                                    this.navIndexItem.btnClickIndex = index;
+                                    return null;
+                                }
+                                return pre + next.offsetWidth;
+                            },0);
+                        }
+                    } else {
+                        if(this.navIndexItem.btnClickIndex){
+                            btn.reduce((pre,next,index) =>{
+                                if(pre != null && this.navIndexItem.btnClickIndex - 1 == index){
+                                    if(btnBoxWidth + index + 1 - (pre + next.offsetWidth) > 0){
+                                        btnBox.style.left = "0px";
+                                        this.navIndexItem.btnClickIndex = 0;
+                                    } else {
+                                        btnBox.style.left = btnBoxWidth + index + 1 - (pre + next.offsetWidth) + "px";
+                                        this.navIndexItem.btnClickIndex = index;
+                                    }
+                                    return null;
+                                }
+                                return pre + next.offsetWidth;
+                            },0);
+                        }
+                    }
+                }
+            },
+            headerNavBtnLeftWidth(index){
+                let btn = Array.from(document.querySelectorAll("#navIndexBtnBox .el-button"));
+                let left = $("#navIndexBtnBox>div").css("left");
+                if(btn[index] && Math.abs(parseInt(left)) > btn[index].offsetLeft){
+                    if(btn[index].offsetLeft < $("#navIndexBtnBox").width()){
+                        $("#navIndexBtnBox>div").css("left",0);
+                    }else {
+                        console.log($("#navIndexBtnBox").width() , btn[index].offsetLeft);
+                        $("#navIndexBtnBox>div").css("left",$("#navIndexBtnBox").width() - btn[index].offsetLeft);
+                    }
+                }
             }
         },
         mounted() {
+            const that = this;
             //侧边导航数据
             this.$post("/backstage/menu/getMenuJson3", {ref: "n"}, {dataType: "json"}).then((data) => {
                 this.sideNav.data = data.obj.menuList;
+                this.$set(this.navIndexItem,"btnData",[{name: data.obj.menuList[0].name, url: data.obj.menuList[0].resUrl + "?menu=" + data.obj.menuList[0].id}]);
             });
             //侧边导航颜色 /backstage/account/getTheme
             this.ajaxBackgroundColor();
@@ -582,12 +748,27 @@
 
             //接收webSocket
             this.$ws.message().then((data)=>{
-                this.$notify({
-                    title: this.WSContentBrack(data.content,data.title),
-                    message: this.WSContentBrack(data.content),
-                    position: 'bottom-right'
-                });
-            })
+                if(data){
+                    let wsData = this.headerNav.wsData;
+                    wsData.unshift(data);
+                    this.$set(this.headerNav,"wsData",wsData);
+                    this.$notify({
+                        title: this.WSContentBrack(data.content,data.title),
+                        message: this.WSContentBrack(data.content),
+                        position: 'bottom-right'
+                    });
+                }
+            });
+
+            //监听头部dom变化
+            document.getElementById("navIndexBtnBox").addEventListener("DOMNodeInserted",function(){
+                if(this.offsetWidth < $(this).children("div").width()){
+                    that.navIndexItem.btnClickIndex = $(this).find("button").length -1;
+                    $(this).children("div").css("left",this.offsetWidth+1 - $(this).children("div").width());
+                }else {
+                    $(this).css("left",0);
+                }
+            });
         },
         beforeDestroy() {
             if (this.$store.getters.getStyle) {
@@ -611,6 +792,7 @@
         top: 0;
         overflow-y: auto;
         overflow-x: hidden;
+        border-right: .5px solid #ddd;
         scrollbar-arrow-color: #666; /**//*三角箭头的颜色*/
         scrollbar-face-color: #ddd; /**//*立体滚动条的颜色*/
         scrollbar-3dlight-color: #fff; /**//*立体滚动条亮边的颜色*/
@@ -892,10 +1074,16 @@
 
                 #WSContent{
                     padding: 10px;
+                    position: relative;
 
                     .WSContent-title{
                         padding: 0 20px;
                         width: 100%;
+                        position: sticky;
+                        top: 0;
+                        left: 0;
+                        z-index: 99;
+                        background-color: #ecf5ff;
 
                         strong{
                             margin-right: 20px;
@@ -906,14 +1094,107 @@
                         margin-top: 20px;
 
                         .el-card{
+                            cursor: pointer;
+
+                            .el-card__body{
+                                pointer-events: none;
+                            }
                             p{
                                 margin-top: 5px;
                             }
+                        }
+                        .el-card:hover{
+                            border: 1px solid #409eff;
                         }
                     }
                 }
             }
         }
 
+    }
+    #navIndexItem{
+        width: 100%;
+        height: 40px;
+        background-color: white;
+        box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+
+        .positionBtn{
+            padding: 9px 8px;
+            border-radius: 0;
+            height: 40px;
+
+            .btnIcon{
+                width: 18px;
+                height: 18px;
+                path{
+                    fill: #409EFF;
+                }
+            }
+        }
+        .positionBtn:hover,.positionBtn:active,.positionBtn:focus{
+            path{
+                fill: #fff;
+            }
+        }
+        .positionBtn:first-child{
+            float: left;
+            border-right-color: #909399;
+            border-left: none;
+        }
+        .positionBtn:last-child{
+            float: right;
+            border-left-color: #909399;
+        }
+
+        #navIndexBtnBox{
+            width: calc(100% - 72px);
+            height: 40px;
+            float: left;
+            overflow: hidden;
+            position: relative;
+
+            .el-button-group{
+                height: 100%;
+                width: auto;
+                transition: all 0.3s linear;
+                display: flex;
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+        .el-button-group>.el-button:first-child,.el-button-group>.el-button:last-child{
+            border-radius: 0;
+        }
+        .el-button{
+            i{
+                margin-left: 5px;
+            }
+        }
+        .el-button-group .el-button--primary:not(:first-child):not(:last-child) {
+            border-left-color: #909399;
+            border-right-color: #909399;
+        }
+        .el-button-group .el-button--primary:first-child {
+            border-right-color: #909399;
+        }
+        .el-button-group .el-button--primary:last-child {
+            border-left-color: #909399;
+        }
+    }
+    #rightBox-content{
+        width: 100%;
+        height: calc(100% - 90px);
+        background-color: white;
+        overflow: hidden;
+
+        .jobIframe{
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
     }
 </style>
