@@ -32,3 +32,9 @@ body,html{
 #drawerThemeColor .el-color-picker__trigger{
     width: 200px;
 }
+.el-popover.el-popper{
+    min-width: 60px;
+}
+#user-info .el-dialog__body{
+    padding-top: 0;
+}

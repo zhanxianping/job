@@ -121,10 +121,10 @@
         },
         props: ["dataRes","dataColor"],
         watch: {
-            dataRes: function (newValue, oldValue) {
+            dataRes: function (newValue) {
                 this.drawerThemeColor = newValue;
             },
-            dataColor: function (newValue, oldValue) {
+            dataColor: function (newValue) {
                 this.colorBox = newValue;
             }
         },

@@ -37,6 +37,18 @@
                 <div id="nav-title">
                     <i @click="navIconOn" style="cursor: pointer" :class="headerNav.sideNavOn ? 'el-icon-s-unfold':'el-icon-s-fold'"></i>
                     <span>IT服务管理系统</span>
+                    <div id="head-phone">
+                        <span>[{{headerNav.phone.phoneNumber}}]</span>
+                        <span>{{headerNav.phone.user_info ? "开工": "收工"}}</span>
+                        <el-popover
+                                placement="bottom"
+                                width="350"
+                                trigger="click">
+                            <Phone @user_info="phoneUser_info"/>
+                            <span slot="reference" class="phone" :style="'color:'+sideNav.color.navHeaderColor"><i class="el-icon-phone-outline"></i></span>
+                        </el-popover>
+                    </div>
+
                 </div>
                 <div id="nav-content">
                     <div class="nav-exh">
@@ -129,7 +141,7 @@
                                             width="250"
                                             v-model="headerNav.user_visible"
                                             trigger="click">
-                                        <div>
+                                        <div id="headerNav-formUser-select">
                                             <el-input placeholder="请输入" v-model="headerNav.user_state_input">
                                                 <template class="i-icon-box" slot="prepend"><i :class="headerNav.user_state_i"></i></template>
                                                 <el-button type="primary" @click="headerNavUser_state_btn" slot="append" size="mini">确定</el-button>
@@ -254,11 +266,12 @@
                 </el-button>
             </div>
             <div id="rightBox-content">
-                <iframe class="jobIframe" :src="'http://localhost:8080'+item.url"
+                <iframe src="../assets/1.html" style="width: 100%;height: 100%" frameborder="0"></iframe>
+               <!-- <iframe class="jobIframe" :src="'http://localhost:8080'+item.url"
                         v-for="(item, index) in navIndexItem.btnData"
                         v-show="navIndexItem.jobIframe == index"
                         :key="index"
-                        frameborder="0"></iframe>
+                        frameborder="0"></iframe>-->
             </div>
         </div>
     </div>
@@ -272,6 +285,8 @@
     import ImgTailoring from "../components/index/img-tailoring";
     import $vm from "../utils/util";
     import ApplySetting from "../components/index/apply-setting";
+    import Phone from "../components/index/head-phone";
+    import PhoneMsg from "../components/index/head-phoneMsg";
 
     export default {
         name: "app",
@@ -306,6 +321,10 @@
                     dialogSystemInfo: false,
                     drawerWS: false,
                     wsData: [],
+                    phone: {
+                        phoneNumber: "暂无号码",
+                        user_info: false,
+                    },
                     formUser: {
                         loginName: "",
                         name: "",
@@ -358,10 +377,12 @@
         components: {
             SideNavList,
             ImgTailoring,
-            ApplySetting
+            ApplySetting,
+            Phone,
+            PhoneMsg
         },
         watch:{
-            btnClickIndex(newName, oldName) {
+            btnClickIndex(newName) {
                 if (newName > 4){
                     this.headerNavBtnLeftWidth(Number(newName));
                 }
@@ -659,7 +680,7 @@
             },
 
             //头部第二导航按钮点击事件
-            headerNavBtnLeft(e){
+            headerNavBtnLeft(){
                 this.headerNavBtnFunction(0);
             },
             headerNavBtnRight(){
@@ -668,7 +689,7 @@
             headerNavBtnFunction(msg){
                 let btn = Array.from(document.querySelectorAll("#navIndexBtnBox .el-button")) ;
                 let btnBox = document.querySelector("#navIndexBtnBox>.el-button-group"),btnBoxWidth = document.querySelector("#navIndexBtnBox").offsetWidth;
-                let btnWidth = btn.reduce((pre,next,index) =>{
+                let btnWidth = btn.reduce((pre,next) =>{
                     return pre + next.offsetWidth;
                 },0);
                 if(btnWidth > btnBoxWidth){
@@ -722,6 +743,49 @@
                         $("#navIndexBtnBox>div").css("left",$("#navIndexBtnBox").width() - btn[index].offsetLeft);
                     }
                 }
+            },
+            phoneUser_info(info){
+                this.$set(this.headerNav.phone,"user_info",info);
+            },
+            phone_newRTCSession(event){
+                this.$phone.addRTCSessionEventListener(event.session);
+                rtcSession = event.session; // 判断此次回话是由本地发起，还是远端发起
+
+                //来电显示
+                if (event.originator === 'remote') {
+                    let index;
+                    //event.request.from._display_name
+                    index = this.$notify({
+                        title: '来电显示',
+                        position: 'bottom-right',
+                        dangerouslyUseHTMLString: true,
+                        message: `
+                            <div><p style="color:forestgreen;padding: 2px 5px;">${event.request.from._display_name}</p>
+                                <div style="text-align: right;width: 250px;margin-top: 5px;">
+                                    <button  onclick="window.breakOff()" class="el-button el-button--info el-button--mini is-plain">挂断 </button>
+                                    <button onclick="window.anwser()" class="el-button el-button--primary el-button--mini is-plain">接听</button>
+                                </div>
+                            </div>
+                        `,
+                        duration: 0
+                    });
+                    this.$store.commit("addNotificationIndex",index);
+                }
+
+                if (event.originator === 'local') {
+                    this.$phone.addRemoteStream(event.session.connection);
+                }
+            },
+            //接听
+            phone_breakOff(){
+                this.$phone.hangup();
+                $vm.$emit('nowCall',true);
+                this.$store.getters.getNotificationIndex.close();
+            },
+            //挂断
+            phone_anwser(){
+                this.$phone.answer();
+                this.$store.getters.getNotificationIndex.close();
             }
         },
         mounted() {
@@ -769,6 +833,25 @@
                     $(this).css("left",0);
                 }
             });
+
+            //初始化电话
+            const UA = this.$phone.init();
+            UA.on('newRTCSession', this.phone_newRTCSession);
+            UA.on('registered', this.$phone.registered);
+            UA.on('unregistered', this.$phone.unregistered);
+            UA.on('registrationFailed', this.$phone.registrationFailed);
+
+            window.breakOff = this.phone_breakOff;
+            window.anwser = this.phone_anwser;
+            window.contabs = {
+                addMenuTab: function(url,name){
+                    let navBtnData = that.navIndexItem.btnData;
+                    navBtnData.push({name: name, url: url});
+                    that.$set(that.navIndexItem,"btnData",data);
+                    that.$set(that.navIndexItem,"jobIframe",data.length - 1);
+                }
+            }
+
         },
         beforeDestroy() {
             if (this.$store.getters.getStyle) {
@@ -866,6 +949,40 @@
             line-height: 50px;
             font-size: 18px;
             float: left;
+            position: relative;
+            width: 300px;
+
+            #head-phone{
+                width: 190px;
+                height: 50px;
+                position: absolute;
+                right: -300px;
+                top: 0;
+                font-size: 14px;
+
+                span{
+                    margin-left: 20px;
+                    float: none;
+                }
+
+                .phone{
+                    display: block;
+                    float: right;
+                    width: 35px;
+                    height: 35px;
+                    background: #f2f2f2;
+                    margin-top: 7px;
+                    margin-left: 0;
+                    border-radius: 50%;
+                    line-height: 37px;
+                    text-align: center;
+                    font-size: 21px;
+
+                    i{
+                        margin: 0;
+                    }
+                }
+            }
 
             span, i {
                 margin-left: 13px;
@@ -1025,13 +1142,11 @@
         display: inline-block;
         vertical-align: middle;
     }
-    .el-input-group--prepend>.el-input-group__prepend{
+    #headerNav-formUser-select .el-input-group--prepend>.el-input-group__prepend{
         padding: 0 5px;
     }
-    .el-input-group--prepend>.el-input-group__append{
-        color: #FFF;
-        background-color: #409EFF;
-        border-color: #409EFF;
+    #headerNav-formUser-select .el-input-group--prepend>.el-input-group__append{
+        color: #606266;
     }
     .i-icon-state {
         .i-icon();
