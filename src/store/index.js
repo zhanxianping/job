@@ -23,6 +23,9 @@ export default new Vuex.Store({
         addNotificationIndex(state, val){
             state.notificationIndex = val;
         },
+        addNavBtn(){
+
+        }
     },
     actions: {},
     modules: {}

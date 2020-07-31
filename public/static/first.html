@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<div>
+    <h1>这是第一页</h1>
+    <h2>红火火恍恍惚惚</h2>
+    <button id="btn">点击</button>
+</div>
+</body>
+<script>
+    document.querySelector("#btn").onclick = function () {
+        console.log(window.parent.contabs);
+        window.parent.contabs.addMenuTab("/backstage/workflow/serviceApply/index?menu=cf6e41832c8a46a98ffacce21fa78f6f", "自定义页面")
+    }
+</script>
+</html>

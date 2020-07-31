@@ -1,4 +1,13 @@
-import {Message, Notification } from 'element-ui';
+import {Message, Notification} from 'element-ui';
+import $ from "jquery";
+
+$.ajax({
+    url: window.location.host + "/api/backstage/account/getTheme",
+    type: 'post',
+    success: function (dara) {
+        console.log(dara);
+    }
+});
 
 let sipUA = null;
 let rtcSession = null;
@@ -6,8 +15,9 @@ let password = "a123456";
 window.phone = phone;
 const phone = {
     //初始化
-    init() {
+    init(pre,phoneIp,phonePort,extNo) {
         let socket = new JsSIP.WebSocketInterface(pre + '://' + phoneIp + ':' + phonePort);
+        //let socket = new JsSIP.WebSocketInterface('ws' + '://' + '161.189.138.63' + ':' + '5066');
         let configuration = {
             sockets: [socket],
             uri: 'sip:' + extNo + '@' + phoneIp,
@@ -33,11 +43,12 @@ const phone = {
     },
     //拨打电话
     async call(phoneNumber) {
+        let that = this;
         if (sipUA !== null) {
             let eventHandlers = {
                 'peerconnection': function peerconnection(e) {
                     // 处理远端媒体流
-                    addRemoteStream(e.peerconnection);
+                    that.addRemoteStream(e.peerconnection);
                 },
                 'progress': await function progress(e) {
                     //false：红色电话
@@ -51,6 +62,7 @@ const phone = {
                     return true;
                 }
             };
+            console.log(phoneNumber);
             sipUA.call('sip:nroad' + phoneNumber + '@nroad.com.cn', {
                 mediaConstraints: {
                     audio: true,
@@ -81,15 +93,15 @@ const phone = {
         }
     },
     addRTCSessionEventListener(session) {
-        session.on('peerconnection', peerconnection);
-        session.on('progress', progress);
-        session.on('accepted', accepted);
-        session.on('ended', ended);
-        session.on('failed', failed);
-        session.on('getusermediafailed', getusermediafailed);
+        session.on('peerconnection', this.peerconnection);
+        session.on('progress', this.progress);
+        session.on('accepted', this.accepted);
+        session.on('ended', this.ended);
+        session.on('failed', this.failed);
+        session.on('getusermediafailed', this.getusermediafailed);
     },
     newRTCSession(event) {
-        addRTCSessionEventListener(event.session);
+        this.addRTCSessionEventListener(event.session);
         rtcSession = event.session; // 判断此次回话是由本地发起，还是远端发起
 
         if (event.originator === 'remote') {
@@ -103,7 +115,7 @@ const phone = {
         }
 
         if (event.originator === 'local') {
-            addRemoteStream(event.session.connection);
+            this.addRemoteStream(event.session.connection);
         }
     },
     registered() {
