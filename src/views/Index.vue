@@ -58,10 +58,10 @@
                 </div>
                 <div id="nav-content">
                     <div class="nav-exh">
-                        <ul class="info">
-                            <li><a href="#">大屏</a></li>
-                            <li><a href="#">自助服务</a></li>
-                            <li><a href="#">任务看板</a></li>
+                        <ul @click="headNavService" class="info">
+                            <li><a data-index="1" href="#">大屏</a></li>
+                            <li><a data-index="2" href="#">自助服务</a></li>
+                            <li><a data-index="3" href="#">任务看板</a></li>
                         </ul>
                         <img class="imgOne" src="../../public/image/index/toolLost.png"
                              @click="navImgone($event)" alt="">
@@ -123,11 +123,11 @@
                                 </p>
                             </div>
                             <ul @click="imgReplace">
-                                <li><img class="userImg" src="../assets/user/hpic0.jpg" alt=""></li>
-                                <li><img class="userImg" src="../assets/user/hpic1.jpg" alt=""></li>
-                                <li><img class="userImg" src="../assets/user/hpic2.jpg" alt=""></li>
-                                <li><img class="userImg" src="../assets/user/hpic3.jpg" alt=""></li>
-                                <li><img class="userImg" src="../assets/user/hpic4.jpg" alt=""></li>
+                                <li><img class="userImg" src="../../public/image/user/hpic0.jpg" alt=""></li>
+                                <li><img class="userImg" src="../../public/image/user/hpic1.jpg" alt=""></li>
+                                <li><img class="userImg" src="../../public/image/user/hpic2.jpg" alt=""></li>
+                                <li><img class="userImg" src="../../public/image/user/hpic3.jpg" alt=""></li>
+                                <li><img class="userImg" src="../../public/image/user/hpic4.jpg" alt=""></li>
                             </ul>
                             <div class="user-bottom">
                                 <el-button size="small" @click="headerNav.dialogFormVisible = false">取 消</el-button>
@@ -598,6 +598,22 @@
             //点击收起展开菜单栏
             navIconOn() {
                 this.headerNav.sideNavOn = !this.headerNav.sideNavOn;
+            },
+            //自组服务
+            headNavService(e){
+                let index = Number(e.target.setData.index);
+                let url = this.$store.getters.getUrl;
+                switch (index){
+                    case 1:
+                        window.open(url+"/backstage/largeScreen/index");
+                        break;
+                    case 2:
+                        window.open(url+"/backstage/reception/main");
+                        break;
+                    case 3:
+                        window.open(url+"/backstage/workflow/flowRun/workOrderKanBan");
+                        break;
+                }
             },
             //个人设置
             userDrop(command) {
@@ -1412,7 +1428,7 @@
     .i-icon {
         width: 28px;
         height: 28px;
-        background-image: url("../assets/user/state.png");
+        background-image: url("../../public/image/user/state.png");
         display: inline-block;
         vertical-align: middle;
     }

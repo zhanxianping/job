@@ -2,11 +2,12 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 Vue.use(Vuex);
+const projectUrl = window.location.host;
 
 export default new Vuex.Store({
     state: {
         token: "aaaa",
-        url: "/api/",
+        url: projectUrl,
         style: "",
         notificationIndex: ""
     },

@@ -18,7 +18,7 @@ function endLoading() {    //使用Element loading-close 方法
 }
 
 const service = axios.create({
-    //baseURL: window.location.host,
+   // baseURL: window.location.protocol+"//"+window.location.host,
     baseURL: "/api/",//使用跨域
     timeout: 50000, // request timeout
     headers:{
