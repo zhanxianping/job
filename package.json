@@ -27,7 +27,7 @@
     "jquery": "^3.5.1",
     "less": "^3.0.4",
     "less-loader": "^5.0.0",
-    "qs": "^6.9.4",
+    "qs": "^6.9.7",
     "vue-template-compiler": "^2.6.11"
   }
 }
